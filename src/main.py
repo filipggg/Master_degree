@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import torch
 import torch.optim as optim
 import torchvision.transforms as T
@@ -26,26 +28,26 @@ parameters = {
     'channel': 1, # 3 <= RGB, 1 <= greyscale
     'num_classes': 8, # 7 classes, but there is also one for background
     'learning_rate': 3e-4,
-    'batch_size': 16,
-    'num_epochs': 20,
+    'batch_size': 2,
+    'num_epochs': 1,
     'rescale': [1000, 1000], # if float, each image will be multiplied by it, if list [width, height] each image will be scaled to that size (concerns both images + annotations)
-    'shuffle': False, 
+    'shuffle': False,
     'weight_decay': 0, # regularization
     'lr_scheduler': True, # lr scheduler
     'lr_step_size': 5, # lr scheduler step
-    'lr_gamma': .4, # lr step multiplier 
+    'lr_gamma': .4, # lr step multiplier
     'trainable_backbone_layers': 5, # 5 <= all, 0 <= any
     'num_workers': 2,
-    'main_dir': '/Users/alexdrozdz/Desktop/Studia/00. Seminarium magisterskie/Master_degree/',
-    'image_dir': '/Users/alexdrozdz/Desktop/Studia/00. Seminarium magisterskie/scraped_photos_final/',
-    'annotations_dir': '/Users/alexdrozdz/Desktop/Studia/00. Seminarium magisterskie/news-navigator/',
+    'main_dir': './models/',
+    'image_dir': './images/',
+    'annotations_dir': './',
     'train': True,
     'test': True,
     'val': True,
     'gpu': True,
 }
 
-# read data and create dataloaders 
+# read data and create dataloaders
 data_transform = T.Compose([
     T.Grayscale(num_output_channels=parameters['channel']),
     T.ToTensor(),
@@ -117,7 +119,7 @@ if parameters['train']:
     # replace the pre-trained head with a new one
     in_features = model.roi_heads.box_predictor.cls_score.in_features
     model.roi_heads.box_predictor = FastRCNNPredictor(
-        in_features, 
+        in_features,
         num_classes=parameters['num_classes']
         )
 
@@ -139,14 +141,14 @@ if parameters['train']:
 
     # training
     trained_model = train_model(
-        model=model, 
-        optimizer=optimizer, 
+        model=model,
+        optimizer=optimizer,
         train_dataloader=train_dataloader,
-        epochs=parameters['num_epochs'], 
+        epochs=parameters['num_epochs'],
         gpu=parameters['gpu'],
         save_path=parameters['main_dir'],
-        val_dataloader=val_dataloader, 
-        lr_scheduler=lr_scheduler, 
+        val_dataloader=val_dataloader,
+        lr_scheduler=lr_scheduler,
     )
 
 # prediction
@@ -178,7 +180,7 @@ if parameters['test']:
     # prediction on test set
     print('###  Evaluating test set  ###')
     model_predict(
-        model=model, 
+        model=model,
         test_dataloader=test_dataloader,
         gpu=parameters['gpu'],
         save_path=parameters['main_dir']+'model_output/test_model_output.csv',
@@ -187,7 +189,7 @@ if parameters['test']:
     if parameters['train']:
         print('###  Evaluating train set  ###')
         model_predict(
-            model=model, 
+            model=model,
             test_dataloader=train_dataloader,
             gpu=parameters['gpu'],
             save_path=parameters['main_dir']+'model_output/train_model_output.csv',
@@ -196,7 +198,7 @@ if parameters['test']:
     if parameters['val']:
         print('###  Evaluating validation set  ###')
         model_predict(
-            model=model, 
+            model=model,
             test_dataloader=val_dataloader,
             gpu=parameters['gpu'],
             save_path=parameters['main_dir']+'model_output/val_model_output.csv',
