@@ -19,33 +19,11 @@ from functions import collate_fn
 from functions import seed_worker
 import warnings
 import numpy as np
+from parameters import parameters
 
 # warnings
 warnings.filterwarnings("ignore")
 
-# hyperparameters and more
-parameters = {
-    'channel': 1, # 3 <= RGB, 1 <= greyscale
-    'num_classes': 8, # 7 classes, but there is also one for background
-    'learning_rate': 3e-4,
-    'batch_size': 2,
-    'num_epochs': 1,
-    'rescale': [1000, 1000], # if float, each image will be multiplied by it, if list [width, height] each image will be scaled to that size (concerns both images + annotations)
-    'shuffle': False,
-    'weight_decay': 0, # regularization
-    'lr_scheduler': True, # lr scheduler
-    'lr_step_size': 5, # lr scheduler step
-    'lr_gamma': .4, # lr step multiplier
-    'trainable_backbone_layers': 5, # 5 <= all, 0 <= any
-    'num_workers': 2,
-    'main_dir': './models/',
-    'image_dir': './images/',
-    'annotations_dir': './',
-    'train': True,
-    'test': True,
-    'val': True,
-    'gpu': True,
-}
 
 # read data and create dataloaders
 data_transform = T.Compose([
@@ -150,56 +128,3 @@ if parameters['train']:
         val_dataloader=val_dataloader,
         lr_scheduler=lr_scheduler,
     )
-
-# prediction
-if parameters['test']:
-    model = torch.load(parameters['main_dir']+'saved_models/model.pth')
-    in_test = from_tsv_to_list(parameters['annotations_dir']+'test-A/in.tsv')
-    test_paths = [parameters['image_dir']+path for path in in_test]
-    data_test = prepare_data_for_dataloader(
-        img_dir=parameters['image_dir'],
-        in_list=in_test,
-        scale=parameters['rescale'],
-        test=True,
-        )
-    dataset_test = NewspapersDataset(
-        df=data_test,
-        images_path=test_paths,
-        scale=parameters['rescale'],
-        transforms=data_transform,
-        test=True,
-        )
-    test_dataloader = DataLoader(
-        dataset_test,
-        batch_size=parameters['batch_size'],
-        shuffle=parameters['shuffle'],
-        collate_fn=collate_fn,
-        num_workers=parameters['num_workers'],
-    )
-
-    # prediction on test set
-    print('###  Evaluating test set  ###')
-    model_predict(
-        model=model,
-        test_dataloader=test_dataloader,
-        gpu=parameters['gpu'],
-        save_path=parameters['main_dir']+'model_output/test_model_output.csv',
-    )
-    # prediction on train set (to check under/overfitting)
-    if parameters['train']:
-        print('###  Evaluating train set  ###')
-        model_predict(
-            model=model,
-            test_dataloader=train_dataloader,
-            gpu=parameters['gpu'],
-            save_path=parameters['main_dir']+'model_output/train_model_output.csv',
-        )
-    # prediction on validation set
-    if parameters['val']:
-        print('###  Evaluating validation set  ###')
-        model_predict(
-            model=model,
-            test_dataloader=val_dataloader,
-            gpu=parameters['gpu'],
-            save_path=parameters['main_dir']+'model_output/val_model_output.csv',
-        )

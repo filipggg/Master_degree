@@ -22,18 +22,18 @@ warnings.filterwarnings("ignore")
 
 def model_predict(model, save_path, test_dataloader, gpu=True):
     start_time = datetime.datetime.now()
-    print(f'Start time: {start_time} \n')
+    print(f'Start time: {start_time} \n', file=sys.stderr)
     # switch to gpu if available
     cuda_statement = torch.cuda.is_available()
-    print(f'Cuda available: {torch.cuda.is_available()}')
+    print(f'Cuda available: {torch.cuda.is_available()}', file=sys.stderr)
     if cuda_statement == True:
         device = torch.device(torch.cuda.current_device())
     if gpu==False:
         device = 'cpu'
-    print(f'Current device: {device}\n')
+    print(f'Current device: {device}\n', file=sys.stderr)
     # move model to the right device
     model.to(device)
-    print('###  Evaluaiting  ###')
+    print('###  Evaluating  ###', file=sys.stderr)
     n_threads = torch.get_num_threads()
     torch.set_num_threads(1)
     cpu_device = torch.device("cpu")
@@ -63,7 +63,7 @@ def model_predict(model, save_path, test_dataloader, gpu=True):
         output_df['new_image_size'] = new_size_list
         output_df = output_df.sort_values('image_name').reset_index(drop=True, inplace=False)
         output_df.to_csv(save_path)
- 
-    print(f'\n####### JOB FINISHED #######\n\n')
+
+    print(f'\n####### JOB FINISHED #######\n\n', file=sys.stderr)
 
     return model

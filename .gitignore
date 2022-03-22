@@ -4,3 +4,4 @@
 saved_models/model.pth
 venv/
 __pycache__
+*~
