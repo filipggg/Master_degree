@@ -17,7 +17,7 @@ import get_image_size
 from functions import save_list_to_tsv_file
 
 in_file = sys.argv[1]
-out_file = sys.argv[2]
+out_file = sys.argv[3]
 
 data_transform = T.Compose([
     T.Grayscale(num_output_channels=parameters['channel']),
@@ -49,7 +49,7 @@ test_dataloader = DataLoader(
     num_workers=parameters['num_workers'],
 )
 
-csv_file = parameters['main_dir']+'model_output/test_model_output.csv'
+csv_file = sys.argv[2]
 
 model_predict(
     model=model,
