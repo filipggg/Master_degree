@@ -4,10 +4,10 @@ parameters = {
     'channel': 1, # 3 <= RGB, 1 <= greyscale
     'num_classes': 8, # 7 classes, but there is also one for background
     'learning_rate': 3e-4,
-    'batch_size': 2,
-    'num_epochs': 1,
+    'batch_size': 24,
+    'num_epochs': 20,
     'rescale': [1000, 1000], # if float, each image will be multiplied by it, if list [width, height] each image will be scaled to that size (concerns both images + annotations)
-    'shuffle': False,
+    'shuffle': True,
     'weight_decay': 0, # regularization
     'lr_scheduler': True, # lr scheduler
     'lr_step_size': 5, # lr scheduler step
