@@ -20,6 +20,8 @@ from functions import seed_worker
 import warnings
 import numpy as np
 from parameters import parameters
+import yaml
+
 
 # warnings
 warnings.filterwarnings("ignore")
@@ -32,11 +34,14 @@ data_transform = T.Compose([
     T.Normalize((0.5,), (0.5,)),
     ])
 
+label_mapping = {}
+
 if parameters['val']:
     expected_val = from_tsv_to_list(parameters['annotations_dir']+'dev-0/expected.tsv')
     in_val = from_tsv_to_list(parameters['annotations_dir']+'dev-0/in.tsv')
     val_paths = [parameters['image_dir']+path for path in in_val]
     data_val = prepare_data_for_dataloader(
+        label_mapping,
         img_dir=parameters['image_dir'],
         in_list=in_val,
         expected_list=expected_val,
@@ -66,6 +71,7 @@ if parameters['train']:
     in_train = from_tsv_to_list(parameters['annotations_dir']+'train/in.tsv')
     train_paths = [parameters['image_dir']+path for path in in_train]
     data_train = prepare_data_for_dataloader(
+        label_mapping,
         img_dir=parameters['image_dir'],
         in_list=in_train,
         expected_list=expected_train,
@@ -128,3 +134,6 @@ if parameters['train']:
         val_dataloader=val_dataloader,
         lr_scheduler=lr_scheduler,
     )
+
+with open('models/labels.yaml', 'w') as file:
+    yaml.dump(label_mapping, file)

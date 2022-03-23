@@ -15,6 +15,7 @@ import numpy as np
 import ast
 import get_image_size
 from functions import save_list_to_tsv_file
+import yaml
 
 in_file = sys.argv[1]
 out_file = sys.argv[3]
@@ -25,10 +26,17 @@ data_transform = T.Compose([
     T.Normalize((0.5,), (0.5,)),
     ])
 
+with open('models/labels.yaml', 'r') as file:
+    label_mapping = yaml.safe_load(file)
+
+reverse_label_mapping = inv_map = {v: k for k, v in label_mapping.items()}
+
+
 model = torch.load(parameters['main_dir']+'saved_models/model.pth')
 in_test = from_tsv_to_list(in_file)
 test_paths = [parameters['image_dir']+path for path in in_test]
 data_test = prepare_data_for_dataloader(
+    label_mapping,
     img_dir=parameters['image_dir'],
     in_list=in_test,
     scale=parameters['rescale'],
@@ -90,20 +98,7 @@ def parse_model_outcome(model_outcome_df, in_file, image_directory):
         pred_boxes = ast.literal_eval(model_outcome_df['predicted_boxes'][i])
         out_str = ''
         for ii in range(len(pred_labels)):
-            if int(pred_labels[ii]) == 1:
-                label = 'photograph'
-            elif int(pred_labels[ii]) == 2:
-                label = 'illustration'
-            elif int(pred_labels[ii]) == 3:
-                label = 'map'
-            elif int(pred_labels[ii]) == 4:
-                label = 'cartoon'
-            elif int(pred_labels[ii]) == 5:
-                label = 'editorial_cartoon'
-            elif int(pred_labels[ii]) == 6:
-                label = 'headline'
-            elif int(pred_labels[ii]) == 7:
-                label = 'advertisement'
+            label = reverse_label_mapping[int(pred_labels[ii])]
             x0 = str(int(round(pred_boxes[ii][0], 0)*scaler_width[i]))
             y0 = str(int(round(pred_boxes[ii][1], 0)*scaler_height[i]))
             x1 = str(int(round(pred_boxes[ii][2], 0)*scaler_width[i]))
