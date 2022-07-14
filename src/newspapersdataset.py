@@ -14,25 +14,13 @@ from image_size import get_image_size  # source: https://github.com/scardine/ima
 warnings.filterwarnings("ignore")
 
 
-def news_navigator_target_encoder(str_label):
-    if str_label == 'photograph':
-        num_label = 1
-    elif str_label == 'illustration':
-        num_label = 2
-    elif str_label == 'map':
-        num_label = 3
-    elif str_label == 'cartoon':
-        num_label = 4
-    elif str_label == 'editorial_cartoon':
-        num_label = 5
-    elif str_label == 'headline':
-        num_label = 6
-    elif str_label == 'advertisement':
-        num_label = 7
-    return num_label
+def prepare_data_for_dataloader(label_mapping, img_dir, in_list, expected_list=None, bbox_format='x0y0x1y1', scale=None, test=False):
 
+    if label_mapping:
+        last_label_ix = max(label_mapping.values())
+    else:
+        last_label_ix = 0
 
-def prepare_data_for_dataloader(img_dir, in_list, expected_list=None, bbox_format='x0y0x1y1', scale=None, test=False):
     df = pd.DataFrame()
     for i in range(len(in_list)):
         img_width, img_height = get_image_size.get_image_size(
@@ -57,7 +45,16 @@ def prepare_data_for_dataloader(img_dir, in_list, expected_list=None, bbox_forma
                 file_num_name = in_list[i].split('.')[0]
                 expected_list_split_2 = expected_list_split[ii].split(':')
                 bbox = expected_list_split_2[1].split(',')
-                label = news_navigator_target_encoder(expected_list_split_2[0])
+
+                original_label = expected_list_split_2[0]
+
+                if original_label in label_mapping:
+                    label = label_mapping[original_label]
+                else:
+                    last_label_ix += 1
+                    label_mapping[original_label] = last_label_ix
+                    label = last_label_ix
+
                 x0, y0 = int(bbox[0]), int(bbox[1])
                 x1, y1 = int(bbox[2]), int(bbox[3])
                 if bbox_format == 'x0y0wh':
@@ -74,6 +71,7 @@ def prepare_data_for_dataloader(img_dir, in_list, expected_list=None, bbox_forma
                     'new_height': int(new_img_height),
                 }
                 df = df.append(temp_dict, ignore_index=True)
+
     return df
 
 
@@ -100,12 +98,12 @@ class NewspapersDataset(Dataset):
   def __getitem__(self, idx):
     img_path = self.images_path[idx]
     img = Image.open(img_path)
-    
+
     if not self.test:
         names, labels, boxes, new_image_size = get_target(img_path.split('/')[-1], self.df, test=False)
         areas = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
     else:
-        names, new_image_size = get_target(img_path.split('/')[-1], self.df, test=True)      
+        names, new_image_size = get_target(img_path.split('/')[-1], self.df, test=True)
 
     if self.scale:
         img = img.resize((int(new_image_size[0, 0]), int(new_image_size[0, 1])))
@@ -118,7 +116,7 @@ class NewspapersDataset(Dataset):
         area = torch.as_tensor(areas, dtype=torch.float32)
         labels = torch.as_tensor(labels, dtype=torch.int64)
         boxes = torch.as_tensor(boxes, dtype=torch.float32)
-    
+
     target = {}
     target['image_id'] = image_id
     target['image_name'] = image_name
@@ -131,5 +129,5 @@ class NewspapersDataset(Dataset):
 
     if self.transforms:
         img = self.transforms(img)
-    
+
     return img, target
